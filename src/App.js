@@ -7,6 +7,7 @@ import PremiumRoute from "./components/routes/PremiumRoute";
 import SignedInRoute from "./components/routes/SignedInRoute";
 import { AuthProvider } from "./providers/AuthProvider";
 import { CustomThemeProvider } from "./providers/CustomThemeProvider";
+import { SnackBarProvider } from "./providers/SnackbarProvider";
 import ResetPassword from "./views/auth/ResetPassword";
 import SignIn from "./views/auth/SignIn";
 import SignUp from "./views/auth/SignUp";
@@ -21,30 +22,36 @@ import WorkawayBot from "./views/workawayBot/WorkawayBot";
 const App = () => {
   return (
     <CustomThemeProvider>
-      <AuthProvider>
-        <Router>
-          <Switch>
-            <NotSignedInRoute exact path="/" component={Home} />
-            <NotSignedInRoute exact path="/signup" component={SignUp} />
-            <NotSignedInRoute exact path="/signin" component={SignIn} />
-            <NotSignedInRoute
-              exact
-              path="/reset-password"
-              component={ResetPassword}
-            />
+      <SnackBarProvider>
+        <AuthProvider>
+          <Router>
+            <Switch>
+              <NotSignedInRoute exact path="/" component={Home} />
+              <NotSignedInRoute exact path="/signup" component={SignUp} />
+              <NotSignedInRoute exact path="/signin" component={SignIn} />
+              <NotSignedInRoute
+                exact
+                path="/reset-password"
+                component={ResetPassword}
+              />
 
-            <SignedInRoute exact path="/dashboard" component={Dashboard} />
-            <SignedInRoute exact path="/get-licence" component={GetLicence} />
-            <SignedInRoute exact path="/profile" component={Profile} />
+              <SignedInRoute exact path="/dashboard" component={Dashboard} />
+              <SignedInRoute exact path="/get-licence" component={GetLicence} />
+              <SignedInRoute exact path="/profile" component={Profile} />
 
-            <PremiumRoute exact path="/workaway-bot" component={WorkawayBot} />
+              <PremiumRoute
+                exact
+                path="/workaway-bot"
+                component={WorkawayBot}
+              />
 
-            <AdminRoute exact path="/users" component={Users} />
+              <AdminRoute exact path="/users" component={Users} />
 
-            <Route path="/*" component={NotFound} />
-          </Switch>
-        </Router>
-      </AuthProvider>
+              <Route path="/*" component={NotFound} />
+            </Switch>
+          </Router>
+        </AuthProvider>
+      </SnackBarProvider>
     </CustomThemeProvider>
   );
 };

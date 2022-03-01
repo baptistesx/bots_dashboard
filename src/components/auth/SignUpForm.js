@@ -11,8 +11,9 @@ import {
 import React, { useState } from "react";
 import GoogleLogin from "react-google-login";
 import { useForm } from "react-hook-form";
-import { useHistory, useLocation } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import useSnackbars from "../../hooks/useSnackbars";
 import signUpFormSchema from "../../schemas/signUpFormSchema";
 
 //TODO: validate and update fields error messages in direct live
@@ -24,8 +25,7 @@ import signUpFormSchema from "../../schemas/signUpFormSchema";
 const SignUpForm = () => {
   let auth = useAuth();
 
-  let location = useLocation();
-  let { from } = location.state || { from: { pathname: "/" } };
+  const { addAlert } = useSnackbars();
 
   // Form fields
   const [name, setName] = useState("");
@@ -53,12 +53,18 @@ const SignUpForm = () => {
       .signUpWithEmailAndPassword(name, email, password, () => {
         setIsSigningUp(false);
 
-        history.replace(from);
+        addAlert({
+          message: "Welcome", // TODO: use custom message if new user
+          severity: "success",
+        });
       })
       .catch((err) => {
         setIsSigningUp(false);
 
-        alert(err);
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
       });
   };
 
@@ -69,18 +75,26 @@ const SignUpForm = () => {
       .signInWithGoogle(response.accessToken, () => {
         setIsSigningUp(false);
 
-        history.replace(from);
+        addAlert({
+          message: "Welcome", // TODO: use custom message if new user
+          severity: "success",
+        });
       })
       .catch((err) => {
         setIsSigningUp(false);
 
-        alert(err);
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
       });
   };
 
   const onGetOauthGoogleTokenFail = async (error) => {
-    //TODO: replace alert with snackbar
-    alert(error);
+    addAlert({
+      message: error,
+      severity: "error",
+    });
   };
 
   return (

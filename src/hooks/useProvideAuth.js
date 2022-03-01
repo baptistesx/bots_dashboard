@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import apiAuth from "../api/auth";
+import useSnackbars from "../hooks/useSnackbars";
 
 export function useProvideAuth() {
   const [user, setUser] = useState(null);
+
+  const { addAlert } = useSnackbars();
 
   useEffect(() => {
     apiAuth
@@ -10,7 +13,10 @@ export function useProvideAuth() {
         setUser(user);
       })
       .catch((err) => {
-        console.log(err);
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
       });
   }, []);
 

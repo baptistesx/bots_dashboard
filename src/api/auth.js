@@ -21,7 +21,10 @@ const apiAuth = {
         email,
         password,
       })
-      .then((res) => res.data.user);
+      .then((res) => res.data.user)
+      .catch((err) => {
+        throw new Error("An error occured while signing up");
+      });
 
     cb(user);
   },
@@ -32,7 +35,12 @@ const apiAuth = {
         email,
         password,
       })
-      .then((res) => res.data.user);
+      .then((res) => res.data.user)
+      .catch((err) => {
+        throw new Error(
+          "Check your internet connection or email/password might be invalid"
+        );
+      });
 
     cb(user);
   },
@@ -43,29 +51,47 @@ const apiAuth = {
       .axiosApiCall("signInWithGoogle", "post", {
         access_token,
       })
-      .then((res) => res.data.user);
+      .then((res) => res.data.user)
+      .catch((err) => {
+        throw new Error("An error occured while signing in with Google");
+      });
 
     cb(user);
   },
 
   signOut(cb) {
-    apiAuth.axiosApiCall("signOut", "post", {}).then(() => {
-      cb();
-    });
+    apiAuth
+      .axiosApiCall("signOut", "post", {})
+      .then(() => {
+        cb();
+      })
+      .catch((err) => {
+        throw new Error("An error occured while signing out");
+      });
   },
   async resetPassword(email, cb) {
-    apiAuth
+    return apiAuth
       .axiosApiCall("resetPassword", "post", {
         email,
       })
       .then(() => {
         cb();
+      })
+      .catch((err) => {
+        throw new Error(
+          "An error occured while sending a reset password email"
+        );
       });
   },
   async getUser(cb) {
-    await apiAuth.axiosApiCall("user", "get").then((res) => {
-      cb(res.data);
-    });
+    await apiAuth
+      .axiosApiCall("user", "get")
+      .then((res) => {
+        cb(res.data);
+      })
+      .catch((err) => {
+        throw new Error("An error occured while getting user");
+      });
   },
 };
 

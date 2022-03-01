@@ -4,10 +4,13 @@ import { Card, CardActions, CardContent, TextField } from "@mui/material";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../../hooks/useAuth";
+import useSnackbars from "../../hooks/useSnackbars";
 import resetPasswordFormSchema from "../../schemas/resetPasswordFormSchema";
 
 const ResetPasswordForm = () => {
   let auth = useAuth();
+
+  const { addAlert } = useSnackbars();
 
   const [email, setEmail] = useState("");
 
@@ -29,12 +32,18 @@ const ResetPasswordForm = () => {
       .resetPassword(email, () => {
         setIsLoading(false);
 
-        alert("If email is valid, a reset password email has been sent");
+        addAlert({
+          message: "If email is valid, a reset password email has been sent",
+          severity: "success",
+        });
       })
       .catch((err) => {
         setIsLoading(false);
 
-        alert(err);
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
       });
   };
 

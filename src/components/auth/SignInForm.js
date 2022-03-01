@@ -11,12 +11,14 @@ import {
 import React, { useState } from "react";
 import GoogleLogin from "react-google-login";
 import { useForm } from "react-hook-form";
-import { useHistory, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import useSnackbars from "../../hooks/useSnackbars";
 import signInFormSchema from "../../schemas/signInFormSchema";
 
 function SignInForm() {
   let auth = useAuth();
+
+  const { addAlert } = useSnackbars();
 
   // Form fields
   const [email, setEmail] = useState("");
@@ -40,26 +42,50 @@ function SignInForm() {
         setIsSigningIn(false);
 
         // On success, auth.user will not be null anymore => NotSignedInRoute will redirect to /dashboard
+
+        addAlert({
+          message: "Welcome", // TODO: use custom message if new user
+          severity: "success",
+        });
       })
       .catch((err) => {
         setIsSigningIn(false);
-        alert(err);
+
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
       });
   };
 
   const onGetOauthGoogleTokenSuccess = (response) => {
     setIsSigningIn(true);
 
-    auth.signInWithGoogle(response.accessToken, () => {
-      setIsSigningIn(false);
+    auth
+      .signInWithGoogle(response.accessToken, () => {
+        setIsSigningIn(false);
 
-      // On success, auth.user will not be null anymore => NotSignedInRoute will redirect to /dashboard
-    });
+        // On success, auth.user will not be null anymore => NotSignedInRoute will redirect to /dashboard
+        addAlert({
+          message: "Welcome", // TODO: use custom message if new user
+          severity: "success",
+        });
+      })
+      .catch((err) => {
+        setIsSigningIn(false);
+
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
+      });
   };
 
   const onGetOauthGoogleTokenFail = async (error) => {
-    //TODO: replace alert with snackbar
-    alert(error);
+    addAlert({
+      message: error.message,
+      severity: "error",
+    });
   };
 
   return (
