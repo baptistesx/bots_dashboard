@@ -10,9 +10,12 @@ import ListItemText from "@mui/material/ListItemText";
 import React from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { DRAWER_WIDTH } from "../../utils/constants";
+import { useHistory } from "react-router-dom";
 
 const CustomDrawer = ({ handleDrawerToggle, mobileOpen, window }) => {
   const auth = useAuth();
+
+  const history = useHistory();
 
   const container =
     window !== undefined ? () => window().document.body : undefined;
@@ -30,6 +33,10 @@ const CustomDrawer = ({ handleDrawerToggle, mobileOpen, window }) => {
     });
   }
 
+  const handleNavigate = (path) => {
+    history.push(path);
+  };
+
   const drawer = (
     <div>
       <Toolbar />
@@ -41,7 +48,7 @@ const CustomDrawer = ({ handleDrawerToggle, mobileOpen, window }) => {
               button
               key={element.title}
               component="a"
-              href={element.route}
+              onClick={() => handleNavigate(element.route)}
             >
               <ListItemIcon>{element.icon}</ListItemIcon>
               <ListItemText primary={element.title} />

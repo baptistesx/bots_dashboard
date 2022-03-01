@@ -10,47 +10,6 @@ const axiosApiCall = (url, method, body = {}) =>
     withCredentials: true,
   });
 
-const signInWithGoogle = async (access_token) => {
-  return await axiosApiCall("signInWithGoogle", "post", {
-    access_token,
-  }).then((res) => res.data.user);
-};
-
-const signInWithEmailAndPassword = async ({ email, password }) => {
-  return await axiosApiCall("signInWithEmailAndPassword", "post", {
-    email,
-    password,
-  }).then((res) => res.data.user);
-};
-
-const signUpWithEmailAndPassword = async ({ name, email, password }) => {
-  return await axiosApiCall("signUp", "post", {
-    name,
-    email,
-    password,
-  }).then((res) => res.data.user);
-};
-
-//TODO: update emails content and reset password page style
-const resetPassword = async (email) => {
-  const res = await axios
-    .post(`${ENDPOINT}reset-password`, {
-      email: email,
-    })
-    .then((response) => {
-      return response.data;
-    })
-    .catch((error) => {
-      return { error: true, message: error.response.data.message };
-    });
-
-  return res;
-};
-
-const logout = async () => {
-  return await axiosApiCall("signOut", "post");
-};
-
 const getUsers = async () => {
   const res = await axios
     .get(`${ENDPOINT}users`, {
@@ -236,19 +195,13 @@ const getUser = async () => {
 };
 
 export {
-    signInWithEmailAndPassword,
-    signUpWithEmailAndPassword,
-    resetPassword,
-    logout,
-    getUsers,
-    deleteUserById,
-    toggleAdminRights,
-    getCompanies,
-    updateUserById,
-    createUser,
-    getUserById,
-    signInWithGoogle,
-    axiosApiCall,
-    getUser,
+  getUsers,
+  deleteUserById,
+  toggleAdminRights,
+  getCompanies,
+  updateUserById,
+  createUser,
+  getUserById,
+  axiosApiCall,
+  getUser,
 };
-

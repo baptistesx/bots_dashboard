@@ -17,12 +17,15 @@ import { useForm } from "react-hook-form";
 import { updateUserById } from "../api/functions";
 import GlobalLayout from "../components/layout/GlobalLayout";
 import { useAuth } from "../hooks/useAuth";
+import { useHistory } from "react-router-dom";
 
 //TODO: use yup for validation
 function Profile() {
   const auth = useAuth();
 
   const theme = useTheme();
+
+  const history = useHistory();
 
   const {
     register,
@@ -57,6 +60,10 @@ function Profile() {
 
       alert(err);
     }
+  };
+
+  const handleNavigate = (path) => {
+    history.push(path);
   };
 
   return (
@@ -94,7 +101,11 @@ function Profile() {
               <Box />
             )}
             {!auth.user.isPremium ? (
-              <Button href="/get-licence" variant="contained" sx={{ m: 1 }}>
+              <Button
+                onClick={handleNavigate("/get-licence")}
+                variant="contained"
+                sx={{ m: 1 }}
+              >
                 Get Premium Account to access bots !
               </Button>
             ) : (

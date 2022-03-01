@@ -10,8 +10,8 @@ function Dashboard() {
 
   const history = useHistory();
 
-  const handleRedirectToLienceView = () => {
-    history.push("/get-licence");
+  const handleNavigate = (path) => {
+    history.push(path);
   };
 
   return (
@@ -19,13 +19,17 @@ function Dashboard() {
       <Typography variant="h1">Dashboard</Typography>
 
       {user.isPremium ? (
-        <Button href="/workaway-bot" variant="contained" sx={{ m: 1 }}>
+        <Button
+          onClick={() => handleNavigate("/workaway-bot")}
+          variant="contained"
+          sx={{ m: 1 }}
+        >
           Workaway messaging
           <ArrowForwardIcon />
         </Button>
       ) : (
         <Button
-          onClick={handleRedirectToLienceView}
+          onClick={() => handleNavigate("/get-licence")}
           variant="contained"
           sx={{ m: 1 }}
         >

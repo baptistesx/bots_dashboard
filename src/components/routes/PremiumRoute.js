@@ -10,7 +10,6 @@ const PremiumRoute = (props) => {
     <Redirect to="/not-found" />
   ) : (
     <Route {...props} />
-
   );
 };
 
