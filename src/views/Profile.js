@@ -14,10 +14,11 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { updateUserById } from "../api/functions";
+import { useHistory } from "react-router-dom";
 import GlobalLayout from "../components/layout/GlobalLayout";
 import { useAuth } from "../hooks/useAuth";
-import { useHistory } from "react-router-dom";
+import apiUsers from "../api/users";
+import useSnackbars from "../hooks/useSnackbars";
 
 //TODO: use yup for validation
 function Profile() {
@@ -26,6 +27,8 @@ function Profile() {
   const theme = useTheme();
 
   const history = useHistory();
+
+  const { addAlert } = useSnackbars();
 
   const {
     register,
@@ -43,23 +46,41 @@ function Profile() {
   const handleSaveClick = async (data) => {
     setIsLoading(true);
 
-    //TODO use auth
-    try {
-      const res = await updateUserById({
+    apiUsers.updateUserById(
+      {
         id: auth.user.id,
         email: data.email,
+        isAdmin: auth.user.isAdmin, //TODO security issue => pass this param optional
+        isPremium: auth.user.isPremium,//TODO security issue => pass this param optional
         name: data.name,
-      });
+      },
+      () => {
+        setIsLoading(false);
 
-      setIsLoading(false);
-      alert(res.message);
-      reset(data);
-    } catch (err) {
-      reset();
-      setIsLoading(false);
+        addAlert({
+          message: "User well updated",
+          severity: "success",
+        });
 
-      alert(err);
-    }
+        reset(data);
+      }
+    );
+
+    // try {
+    //   // const res = await updateUserById({
+    //   //   id: auth.user.id,
+    //   //   email: data.email,
+    //   //   name: data.name,
+    //   // });
+
+    //   setIsLoading(false);
+    //   // alert(res.message);
+    // } catch (err) {
+    //   reset();
+    //   setIsLoading(false);
+
+    //   alert(err);
+    // }
   };
 
   const handleNavigate = (path) => {
@@ -79,7 +100,7 @@ function Profile() {
               {...register("name")}
               required
               sx={{ mb: 1 }}
-              defaultValue={auth.user?.name}
+              defaultValue={auth.user.name}
             />
             <TextField
               fullWidth
@@ -102,7 +123,7 @@ function Profile() {
             )}
             {!auth.user.isPremium ? (
               <Button
-                onClick={handleNavigate("/get-licence")}
+                onClick={() => handleNavigate("/get-licence")}
                 variant="contained"
                 sx={{ m: 1 }}
               >

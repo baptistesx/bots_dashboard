@@ -23,14 +23,17 @@ import {
   Typography
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { deleteUserById, getUsers, toggleAdminRights } from "../api/functions";
+import apiUsers from "../api/users";
 import GlobalLayout from "../components/layout/GlobalLayout";
 import EditUserDialog from "../components/users/EditUserDialog";
 import { useAuth } from "../hooks/useAuth";
+import useSnackbars from "../hooks/useSnackbars";
 
 function Users() {
   const auth = useAuth();
   const currentUser = auth.user;
+
+  const { addAlert } = useSnackbars();
 
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -43,22 +46,14 @@ function Users() {
     fetchData();
   }, []);
 
-  const onRefreshClick = async () => {
-    await fetchData();
+  const onRefreshClick = () => {
+    fetchData();
   };
 
-  const fetchData = async () => {
+  const fetchData = () => {
     setIsLoading(true);
 
-    try {
-      const res = await getUsers();
-      console.log(res);
-      setUsers([...res]);
-    } catch (err) {
-      setUsers([]);
-
-      alert(err + " : Error fetching users");
-    }
+    apiUsers.getUsers((users) => setUsers([...users]));
 
     setIsLoading(false);
   };
@@ -66,36 +61,31 @@ function Users() {
   const onDeleteClick = async (userId) => {
     setIsLoading(true);
 
-    try {
-      await deleteUserById(userId);
-    } catch (err) {
-      alert(err + " : Error deleting user");
-    }
+    apiUsers.deleteUserById(userId, () => {
+      fetchData();
 
-    await fetchData();
+      setIsLoading(false);
 
-    setIsLoading(false);
+      addAlert({
+        message: "User well deleted",
+        severity: "success",
+      });
+    });
   };
 
   const onToggleAdminRights = async (userId) => {
     setIsLoading(true);
 
-    try {
-      await toggleAdminRights(userId);
+    apiUsers.toggleAdminRights(userId, () => {
+      fetchData();
 
-      setUsers(
-        users.map((user) => {
-          if (user.id === userId) {
-            return { ...user, isAdmin: !user.isAdmin };
-          }
-          return user;
-        })
-      );
-    } catch (err) {
-      alert(err + " : Error toggling admin rights");
-    }
+      setIsLoading(false);
 
-    setIsLoading(false);
+      addAlert({
+        message: "User well updated",
+        severity: "success",
+      });
+    });
   };
 
   const handleOpenUserDialog = (user) => {

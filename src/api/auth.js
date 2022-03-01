@@ -1,21 +1,8 @@
-import axios from "axios";
-import { ENDPOINT } from "../utils/constants";
-
-// TODO: is it good to catch Errors here?
+import api from "./api";
 
 const apiAuth = {
-  // All api requests are made thanks to this function
-  async axiosApiCall(url, method, body = {}) {
-    return axios({
-      method,
-      url: `${ENDPOINT}${url}`,
-      data: body,
-      headers: { "Content-Type": "application/json" },
-      withCredentials: true,
-    });
-  },
   async signUpWithEmailAndPassword(name, email, password, cb) {
-    const user = await apiAuth
+    const user = await api
       .axiosApiCall("signUp", "post", {
         name,
         email,
@@ -30,7 +17,7 @@ const apiAuth = {
   },
   // TODO: why doesn't it work to remove "const user = await" and directly call cb(res.data.user) in then()
   async signInWithEmailAndPassword(email, password, cb) {
-    const user = await apiAuth
+    const user = await api
       .axiosApiCall("signInWithEmailAndPassword", "post", {
         email,
         password,
@@ -47,7 +34,7 @@ const apiAuth = {
   // Send the access_token to the backend, received by Google OAuth2 third party after clicking GoogleLogin button
   // The backend will check it and sign the user in by setting a jwt session token in an http only cookie and return the user
   async signInWithGoogle(access_token, cb) {
-    const user = await apiAuth
+    const user = await api
       .axiosApiCall("signInWithGoogle", "post", {
         access_token,
       })
@@ -60,7 +47,7 @@ const apiAuth = {
   },
 
   signOut(cb) {
-    apiAuth
+    api
       .axiosApiCall("signOut", "post", {})
       .then(() => {
         cb();
@@ -70,7 +57,7 @@ const apiAuth = {
       });
   },
   async resetPassword(email, cb) {
-    return apiAuth
+    return api
       .axiosApiCall("resetPassword", "post", {
         email,
       })
@@ -84,7 +71,7 @@ const apiAuth = {
       });
   },
   async getUser(cb) {
-    await apiAuth
+    await api
       .axiosApiCall("user", "get")
       .then((res) => {
         cb(res.data);

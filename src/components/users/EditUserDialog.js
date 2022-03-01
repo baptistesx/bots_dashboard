@@ -12,11 +12,14 @@ import DialogTitle from "@mui/material/DialogTitle";
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { createUser, updateUserById } from "../../api/functions";
+import apiUsers from "../../api/users";
 import { useAuth } from "../../hooks/useAuth";
+import useSnackbars from "../../hooks/useSnackbars";
 
 function EditUserDialog(props) {
   const auth = useAuth();
+
+  const { addAlert } = useSnackbars();
 
   const { onClose, open, user, ...other } = props;
   const [currentUser, setUser] = useState(user);
@@ -37,37 +40,49 @@ function EditUserDialog(props) {
   };
 
   const handleSaveClick = async (data) => {
-    console.log("data", data);
     setIsSaving(true);
 
-    try {
-      var res;
-      // If updating user
-      if (currentUser?.id) {
-        res = await updateUserById({
+    // If updating user
+    if (currentUser?.id) {
+      apiUsers.updateUserById(
+        {
           id: currentUser.id,
           email: data.email,
           isAdmin: data.isAdmin,
           isPremium: data.isPremium,
           name: data.name,
-        });
-      } else {
-        // If creating user
-        res = await createUser({
+        },
+        () => {
+          setIsSaving(false);
+
+          onClose({ modified: true });
+
+          addAlert({
+            message: "User well updated",
+            severity: "success",
+          });
+        }
+      );
+    } else {
+      // If creating user
+      apiUsers.createUser(
+        {
           email: data.email,
           isAdmin: data.isAdmin,
           isPremium: data.isPremium,
           name: data.name,
-        });
-      }
+        },
+        () => {
+          setIsSaving(false);
 
-      setIsSaving(false);
-      alert(res.message);
-      onClose({ modified: true });
-    } catch (err) {
-      setIsSaving(false);
-      alert(err + " : Error deleting user");
-      onClose({ modified: false });
+          onClose({ modified: true });
+
+          addAlert({
+            message: "User well created",
+            severity: "success",
+          });
+        }
+      );
     }
   };
 
