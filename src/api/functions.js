@@ -1,52 +1,34 @@
 import axios from "axios";
 import { ENDPOINT } from "../utils/constants";
 
-const loginWithEmailAndPassword = async ({ auth, db, email, password }) => {
-  const res = await axios
-    .post(`${ENDPOINT}signin`, {
-      email: email,
-      password: password,
-    })
-    .then((response) => {
-      console.log(response);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      localStorage.setItem("token", JSON.stringify(response.data.token));
+const axiosApiCall = (url, method, body = {}) =>
+  axios({
+    method,
+    url: `${ENDPOINT}${url}`,
+    data: body,
+    headers: { "Content-Type": "application/json" },
+    withCredentials: true,
+  });
 
-      return response.data.user;
-    })
-    .catch((error) => {
-      return {
-        error: true,
-        message:
-          error?.response?.data?.message ?? JSON.stringify(error.message),
-      };
-    });
-
-  return res;
+const signInWithGoogle = async (access_token) => {
+  return await axiosApiCall("signInWithGoogle", "post", {
+    access_token,
+  }).then((res) => res.data.user);
 };
 
-const registerWithEmailAndPassword = async ({ email, password }) => {
-  const res = await axios
-    .post(`${ENDPOINT}signup`, {
-      email: email,
-      password: password,
-    })
-    .then((response) => {
-      console.log("in then");
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      localStorage.setItem("token", JSON.stringify(response.data.token));
+const signInWithEmailAndPassword = async ({ email, password }) => {
+  return await axiosApiCall("signInWithEmailAndPassword", "post", {
+    email,
+    password,
+  }).then((res) => res.data.user);
+};
 
-      return response.data.user;
-    })
-    .catch((error) => {
-      return {
-        error: true,
-        message:
-          error?.response?.data?.message ?? JSON.stringify(error.message),
-      };
-    });
-
-  return res;
+const signUpWithEmailAndPassword = async ({ name, email, password }) => {
+  return await axiosApiCall("signUp", "post", {
+    name,
+    email,
+    password,
+  }).then((res) => res.data.user);
 };
 
 //TODO: update emails content and reset password page style
@@ -65,14 +47,35 @@ const resetPassword = async (email) => {
   return res;
 };
 
-const logout = () => {
-  localStorage.removeItem("user");
-  localStorage.removeItem("token");
+const logout = async () => {
+  return await axiosApiCall("signOut", "post");
 };
 
 const getUsers = async () => {
   const res = await axios
     .get(`${ENDPOINT}users`, {
+      headers: {
+        Authorization: JSON.parse(localStorage.getItem("token")),
+      },
+    })
+    .then((response) => {
+      return response.data;
+    })
+    .catch((error) => {
+      return {
+        error: true,
+        message:
+          error?.response?.data?.message ?? JSON.stringify(error.message),
+      };
+    });
+
+  return res;
+};
+
+const getUserById = async (id) => {
+  console.log(id);
+  const res = await axios
+    .get(`${ENDPOINT}user/${id}`, {
       headers: {
         Authorization: JSON.parse(localStorage.getItem("token")),
       },
@@ -153,10 +156,9 @@ const updateUserById = async (data) => {
       {
         id: data.id,
         email: data.email,
-        is_admin: data.is_admin,
-        is_premium: data.is_premium,
         name: data.name,
-        company: data.company_id,
+        isAdmin: data.isAdmin,
+        isPremium: data.isPremium,
       },
       {
         headers: {
@@ -168,7 +170,11 @@ const updateUserById = async (data) => {
       return response.data;
     })
     .catch((error) => {
-      return { error: true, message: error.response.data.message };
+      return {
+        error: true,
+        message:
+          error?.response?.data?.message ?? JSON.stringify(error.message),
+      };
     });
 
   return res;
@@ -181,8 +187,8 @@ const createUser = async (data) => {
       {
         company_id: data.company_id,
         email: data.email,
-        is_admin: data.is_admin,
-        is_premium: data.is_premium,
+        isAdmin: data.isAdmin,
+        isPremium: data.isPremium,
         name: data.name,
       },
       {
@@ -201,15 +207,48 @@ const createUser = async (data) => {
   return res;
 };
 
-export {
-  loginWithEmailAndPassword,
-  registerWithEmailAndPassword,
-  resetPassword,
-  logout,
-  getUsers,
-  deleteUserById,
-  toggleAdminRights,
-  getCompanies,
-  updateUserById,
-  createUser,
+// const signInWithGoogle = async (googleData) => {
+//   console.log(googleData);
+//   const access_token = googleData.accessToken;
+
+//   const res = await axios
+//     .post(
+//       `${ENDPOINT}signInWithGoogsigninle`,
+//       { data: { access_token } }
+//       // {
+//       //   headers: {
+//       //     "Content-Type": "application/json",
+//       //   },
+//       // }
+//     )
+//     .then((response) => {
+//       return response;
+//     })
+//     .catch((error) => {
+//       return { error: true, message: error.response.data.message };
+//     });
+
+//   return res;
+// };
+
+const getUser = async () => {
+  return await axiosApiCall("user", "get").then((res) => res.data);
 };
+
+export {
+    signInWithEmailAndPassword,
+    signUpWithEmailAndPassword,
+    resetPassword,
+    logout,
+    getUsers,
+    deleteUserById,
+    toggleAdminRights,
+    getCompanies,
+    updateUserById,
+    createUser,
+    getUserById,
+    signInWithGoogle,
+    axiosApiCall,
+    getUser,
+};
+

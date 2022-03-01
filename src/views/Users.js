@@ -26,9 +26,11 @@ import { useEffect, useState } from "react";
 import { deleteUserById, getUsers, toggleAdminRights } from "../api/functions";
 import GlobalLayout from "../components/layout/GlobalLayout";
 import EditUserDialog from "../components/users/EditUserDialog";
+import { useAuth } from "../hooks/useAuth";
 
 function Users() {
-  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const auth = useAuth();
+  const currentUser = auth.user;
 
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -84,7 +86,7 @@ function Users() {
       setUsers(
         users.map((user) => {
           if (user.id === userId) {
-            return { ...user, is_admin: !user.is_admin };
+            return { ...user, isAdmin: !user.isAdmin };
           }
           return user;
         })
@@ -134,7 +136,6 @@ function Users() {
                       <TableRow>
                         <TableCell align="left">Name</TableCell>
                         <TableCell align="left">Email</TableCell>
-                        <TableCell align="left">Company</TableCell>
                         <TableCell align="left">Admin</TableCell>
                         <TableCell align="left">Premium</TableCell>
                         <TableCell align="left">Email verified</TableCell>
@@ -151,14 +152,11 @@ function Users() {
                           <TableCell component="th" scope="row">
                             {user.email}
                           </TableCell>
-                          <TableCell component="th" scope="row">
-                            {user.company_name}
+                          <TableCell align="center" component="th" scope="row">
+                            {user.isAdmin ? <CheckIcon /> : <ClearIcon />}
                           </TableCell>
                           <TableCell align="center" component="th" scope="row">
-                            {user.is_admin ? <CheckIcon /> : <ClearIcon />}
-                          </TableCell>
-                          <TableCell align="center" component="th" scope="row">
-                            {user.is_premium ? <CheckIcon /> : <ClearIcon />}
+                            {user.isPremium ? <CheckIcon /> : <ClearIcon />}
                           </TableCell>
                           <TableCell align="center" component="th" scope="row">
                             {user.is_email_verified ? (
@@ -176,7 +174,7 @@ function Users() {
                                   user.email === currentUser.email || isLoading
                                 }
                               >
-                                {user.is_admin ? (
+                                {user.isAdmin ? (
                                   <RemoveModeratorIcon />
                                 ) : (
                                   <AddModeratorIcon />
