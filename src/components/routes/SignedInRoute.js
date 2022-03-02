@@ -1,15 +1,12 @@
 import React from "react";
 import { Redirect, Route } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
-// Only signed in members can access MemberRoutes
-function SignedInRoute({ component: Component, ...rest }) {
-  const user = JSON.parse(localStorage.getItem("user"));
+// Only signed in members can access SignedInRoutes
+function SignedInRoute(props) {
+  let auth = useAuth();
 
-  return !user ? (
-    <Redirect to="/not-found" />
-  ) : (
-    <Route {...rest} render={(props) => <Component {...rest} {...props} />} />
-  );
+  return !auth.user ? <Redirect to="/" /> : <Route {...props} />;
 }
 
 export default SignedInRoute;

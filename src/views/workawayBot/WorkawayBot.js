@@ -16,7 +16,7 @@ function WorkawayBot() {
         }}
       >
         <InfoForm />
-        
+
         <BotLogs />
       </Box>
 

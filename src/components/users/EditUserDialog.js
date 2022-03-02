@@ -5,42 +5,29 @@ import {
   Dialog,
   DialogActions,
   FormControlLabel,
-  MenuItem,
   TextField,
-  Typography,
 } from "@mui/material";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { createUser, getCompanies, updateUserById } from "../../api/functions";
-import { useTheme } from "@emotion/react";
+import { useForm } from "react-hook-form";
+import apiUsers from "../../api/users";
+import { useAuth } from "../../hooks/useAuth";
+import useSnackbars from "../../hooks/useSnackbars";
 
 function EditUserDialog(props) {
-  const currentSessionUser = JSON.parse(localStorage.getItem("user"));
+  const auth = useAuth();
 
-  const theme = useTheme();
+  const { addAlert } = useSnackbars();
 
   const { onClose, open, user, ...other } = props;
   const [currentUser, setUser] = useState(user);
   // const radioGroupRef = useRef(null);
-  const {
-    register,
-    handleSubmit,
-    watch,
-    control,
-    formState: { errors },
-  } = useForm();
+  const { register, handleSubmit } = useForm();
   const [isSaving, setIsSaving] = useState(false);
 
-  const [companies, setCompanies] = useState([]);
-  const [isGettingCompanies, setIsGettingCompanies] = useState([]);
-
   useEffect(() => {
-    if (companies.length === 0 && currentSessionUser.is_super_admin) {
-      fetchCompanies();
-    }
     if (!open) {
       setUser(user);
     }
@@ -53,56 +40,50 @@ function EditUserDialog(props) {
   };
 
   const handleSaveClick = async (data) => {
-    console.log("data", data);
     setIsSaving(true);
 
-    try {
-      var res;
-      // If updating user
-      if (currentUser?.id) {
-        res = await updateUserById({
+    // If updating user
+    if (currentUser?.id) {
+      apiUsers.updateUserById(
+        {
           id: currentUser.id,
           email: data.email,
-          is_admin: data.isAdmin,
-          is_premium: data.isPremium,
+          isAdmin: data.isAdmin,
+          isPremium: data.isPremium,
           name: data.name,
-          company_id: data.company,
-        });
-      } else {
-        // If creating user
-        res = await createUser({
+        },
+        () => {
+          setIsSaving(false);
+
+          onClose({ modified: true });
+
+          addAlert({
+            message: "User well updated",
+            severity: "success",
+          });
+        }
+      );
+    } else {
+      // If creating user
+      apiUsers.createUser(
+        {
           email: data.email,
-          is_admin: data.isAdmin,
-          is_premium: data.isPremium,
+          isAdmin: data.isAdmin,
+          isPremium: data.isPremium,
           name: data.name,
-          company_id: data.company,
-        });
-      }
+        },
+        () => {
+          setIsSaving(false);
 
-      setIsSaving(false);
-      alert(res.message);
-      onClose({ modified: true });
-    } catch (err) {
-      setIsSaving(false);
-      alert(err + " : Error deleting user");
-      onClose({ modified: false });
+          onClose({ modified: true });
+
+          addAlert({
+            message: "User well created",
+            severity: "success",
+          });
+        }
+      );
     }
-  };
-
-  const fetchCompanies = async () => {
-    setIsGettingCompanies(true);
-
-    try {
-      const res = await getCompanies();
-
-      setCompanies([...res]);
-    } catch (err) {
-      setCompanies([]);
-
-      alert(err + " : Error fetching companies");
-    }
-
-    setIsGettingCompanies(false);
   };
 
   return (
@@ -136,67 +117,20 @@ function EditUserDialog(props) {
             defaultValue={currentUser?.email}
           />
           <FormControlLabel
-            disabled={
-              currentSessionUser?.is_admin &&
-              currentUser.id === currentSessionUser.id
-            }
-            control={<Checkbox defaultChecked={currentUser?.is_admin} />}
+            disabled={auth.user?.isAdmin && currentUser.id === auth.user.id}
+            control={<Checkbox defaultChecked={currentUser?.isAdmin} />}
             label="Is Admin"
             {...register("isAdmin")}
             sx={{ m: 1 }}
             value
           />
           <FormControlLabel
-            control={<Checkbox defaultChecked={currentUser?.is_premium} />}
+            control={<Checkbox defaultChecked={currentUser?.isPremium} />}
             label="Is premium"
             {...register("isPremium")}
             sx={{ m: 1 }}
             value
           />
-
-          <Controller
-            name="company"
-            control={control}
-            defaultValue={
-              currentSessionUser?.company_id ?? currentUser?.company_id ?? ""
-            }
-            rules={{ required: "Company needed" }}
-            render={({ field: { onChange, value } }) => (
-              <TextField
-                fullWidth
-                select
-                label="Company"
-                value={value}
-                onChange={onChange}
-                sx={{ m: 1 }}
-                disabled={
-                  !currentSessionUser?.is_super_admin ||
-                  (currentSessionUser?.is_super_admin &&
-                    currentSessionUser.id === currentUser.id)
-                }
-              >
-                <MenuItem key="0" value={""}></MenuItem>
-                {currentSessionUser?.is_super_admin ? (
-                  companies.map((company) => (
-                    <MenuItem key={company.id} value={company.id}>
-                      {company.name}
-                    </MenuItem>
-                  ))
-                ) : currentSessionUser?.company_id ? (
-                  <MenuItem value={currentSessionUser.company_id}>
-                    {currentSessionUser.company_name}
-                  </MenuItem>
-                ) : (
-                  <MenuItem key="0" value={""}></MenuItem>
-                )}
-              </TextField>
-            )}
-          />
-          {errors.company && errors.company.type === "required" && (
-            <Typography variant="body" sx={{ color: theme.palette.error.main }}>
-              Please choose a company
-            </Typography>
-          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => onClose({ modified: false })}>Cancel</Button>

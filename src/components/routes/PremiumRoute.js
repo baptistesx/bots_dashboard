@@ -1,14 +1,15 @@
-import { default as React } from "react";
+import React from "react";
 import { Redirect, Route } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 // Only premium members can access PremiumRoutes
-const PremiumRoute = ({ component: Component, ...rest }) => {
-  const isPremium = JSON.parse(localStorage.getItem("user"))?.is_premium;
+const PremiumRoute = (props) => {
+  let auth = useAuth();
 
-  return !isPremium ? (
+  return !auth.user.isPremium ? (
     <Redirect to="/not-found" />
   ) : (
-    <Route {...rest} render={(props) => <Component {...rest} {...props} />} />
+    <Route {...props} />
   );
 };
 

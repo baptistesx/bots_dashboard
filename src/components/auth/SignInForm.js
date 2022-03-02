@@ -5,68 +5,87 @@ import {
   Card,
   CardActions,
   CardContent,
+  Divider,
   TextField,
 } from "@mui/material";
 import React, { useState } from "react";
+import GoogleLogin from "react-google-login";
 import { useForm } from "react-hook-form";
-import { useHistory } from "react-router-dom";
-import * as yup from "yup";
-import { loginWithEmailAndPassword } from "../../api/functions";
-
-//TODO: validate and update error message in direct live
-const schema = yup
-  .object({
-    email: yup
-      .string()
-      .email("Must be a valid email")
-      .max(255)
-      .required("Email is required"),
-    password: yup.string().min(6).max(255).required("Password is required"),
-  })
-  .required();
+import { useAuth } from "../../hooks/useAuth";
+import useSnackbars from "../../hooks/useSnackbars";
+import signInFormSchema from "../../schemas/signInFormSchema";
 
 function SignInForm() {
+  let auth = useAuth();
+
+  const { addAlert } = useSnackbars();
+
+  // Form fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [isLoggingWithEmailAndPassword, setIsLoggingWithEmailAndPassword] =
-    useState(false);
-
-  const history = useHistory();
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(signInFormSchema),
   });
 
-  const onSubmit = async (data) => {
-    setIsLoggingWithEmailAndPassword(true);
+  const onSubmit = (data) => {
+    setIsSigningIn(true);
 
-    const res = await loginWithEmailAndPassword({ email, password });
+    auth
+      .signInWithEmailAndPassword(email, password, () => {
+        setIsSigningIn(false);
 
-    setIsLoggingWithEmailAndPassword(false);
+        // On success, auth.user will not be null anymore => NotSignedInRoute will redirect to /dashboard
 
-    welcomeAndRedirectUser(res);
+        addAlert({
+          message: "Welcome", // TODO: use custom message if new user
+          severity: "success",
+        });
+      })
+      .catch((err) => {
+        setIsSigningIn(false);
+
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
+      });
   };
 
-  //TODO: export this function? Also used in SignUpForm
-  const welcomeAndRedirectUser = (res) => {
-    //TODO: replace alert with snackbar
-    if (res.error) {
-      console.error(res.message);
-      alert(res.message);
-    } else {
-      if (res.is_new_user) {
-        alert("Welcome newbie!");
-      } else if (!res.isNewUser) {
-        alert("Welcome back!");
-      }
+  const onGetOauthGoogleTokenSuccess = (response) => {
+    setIsSigningIn(true);
 
-      history.push("/dashboard");
-    }
+    auth
+      .signInWithGoogle(response.accessToken, () => {
+        setIsSigningIn(false);
+
+        // On success, auth.user will not be null anymore => NotSignedInRoute will redirect to /dashboard
+        addAlert({
+          message: "Welcome", // TODO: use custom message if new user
+          severity: "success",
+        });
+      })
+      .catch((err) => {
+        setIsSigningIn(false);
+
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
+      });
+  };
+
+  const onGetOauthGoogleTokenFail = async (error) => {
+    addAlert({
+      message: error.message,
+      severity: "error",
+    });
   };
 
   return (
@@ -82,7 +101,6 @@ function SignInForm() {
               setEmail(event.target.value);
             }}
           />
-          {/* //TODO: style error messages */}
           <p>{errors.email?.message}</p>
 
           <TextField
@@ -103,7 +121,10 @@ function SignInForm() {
           <LoadingButton
             type="submit"
             variant="contained"
-            loading={isLoggingWithEmailAndPassword}
+            loading={isSigningIn}
+            sx={{
+              m: 1,
+            }}
           >
             Sign In
           </LoadingButton>
@@ -116,6 +137,17 @@ function SignInForm() {
           >
             I forgot my password
           </Button>
+        </CardActions>
+
+        <Divider>or</Divider>
+
+        <CardActions sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <GoogleLogin
+            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+            buttonText="Sign in with Google"
+            onSuccess={onGetOauthGoogleTokenSuccess}
+            onFailure={onGetOauthGoogleTokenFail}
+          />
         </CardActions>
       </Card>
     </form>

@@ -24,7 +24,6 @@ const InfoForm = () => {
     register,
     handleSubmit,
     control,
-    formState: { errors },
   } = useForm();
 
   const onStartBotClick = async (data) => {

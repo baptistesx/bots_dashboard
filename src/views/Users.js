@@ -23,12 +23,17 @@ import {
   Typography
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { deleteUserById, getUsers, toggleAdminRights } from "../api/functions";
+import apiUsers from "../api/users";
 import GlobalLayout from "../components/layout/GlobalLayout";
 import EditUserDialog from "../components/users/EditUserDialog";
+import { useAuth } from "../hooks/useAuth";
+import useSnackbars from "../hooks/useSnackbars";
 
 function Users() {
-  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const auth = useAuth();
+  const currentUser = auth.user;
+
+  const { addAlert } = useSnackbars();
 
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -41,22 +46,14 @@ function Users() {
     fetchData();
   }, []);
 
-  const onRefreshClick = async () => {
-    await fetchData();
+  const onRefreshClick = () => {
+    fetchData();
   };
 
-  const fetchData = async () => {
+  const fetchData = () => {
     setIsLoading(true);
 
-    try {
-      const res = await getUsers();
-      console.log(res);
-      setUsers([...res]);
-    } catch (err) {
-      setUsers([]);
-
-      alert(err + " : Error fetching users");
-    }
+    apiUsers.getUsers((users) => setUsers([...users]));
 
     setIsLoading(false);
   };
@@ -64,36 +61,31 @@ function Users() {
   const onDeleteClick = async (userId) => {
     setIsLoading(true);
 
-    try {
-      await deleteUserById(userId);
-    } catch (err) {
-      alert(err + " : Error deleting user");
-    }
+    apiUsers.deleteUserById(userId, () => {
+      fetchData();
 
-    await fetchData();
+      setIsLoading(false);
 
-    setIsLoading(false);
+      addAlert({
+        message: "User well deleted",
+        severity: "success",
+      });
+    });
   };
 
   const onToggleAdminRights = async (userId) => {
     setIsLoading(true);
 
-    try {
-      await toggleAdminRights(userId);
+    apiUsers.toggleAdminRights(userId, () => {
+      fetchData();
 
-      setUsers(
-        users.map((user) => {
-          if (user.id === userId) {
-            return { ...user, is_admin: !user.is_admin };
-          }
-          return user;
-        })
-      );
-    } catch (err) {
-      alert(err + " : Error toggling admin rights");
-    }
+      setIsLoading(false);
 
-    setIsLoading(false);
+      addAlert({
+        message: "User well updated",
+        severity: "success",
+      });
+    });
   };
 
   const handleOpenUserDialog = (user) => {
@@ -134,7 +126,6 @@ function Users() {
                       <TableRow>
                         <TableCell align="left">Name</TableCell>
                         <TableCell align="left">Email</TableCell>
-                        <TableCell align="left">Company</TableCell>
                         <TableCell align="left">Admin</TableCell>
                         <TableCell align="left">Premium</TableCell>
                         <TableCell align="left">Email verified</TableCell>
@@ -151,14 +142,11 @@ function Users() {
                           <TableCell component="th" scope="row">
                             {user.email}
                           </TableCell>
-                          <TableCell component="th" scope="row">
-                            {user.company_name}
+                          <TableCell align="center" component="th" scope="row">
+                            {user.isAdmin ? <CheckIcon /> : <ClearIcon />}
                           </TableCell>
                           <TableCell align="center" component="th" scope="row">
-                            {user.is_admin ? <CheckIcon /> : <ClearIcon />}
-                          </TableCell>
-                          <TableCell align="center" component="th" scope="row">
-                            {user.is_premium ? <CheckIcon /> : <ClearIcon />}
+                            {user.isPremium ? <CheckIcon /> : <ClearIcon />}
                           </TableCell>
                           <TableCell align="center" component="th" scope="row">
                             {user.is_email_verified ? (
@@ -176,7 +164,7 @@ function Users() {
                                   user.email === currentUser.email || isLoading
                                 }
                               >
-                                {user.is_admin ? (
+                                {user.isAdmin ? (
                                   <RemoveModeratorIcon />
                                 ) : (
                                   <AddModeratorIcon />

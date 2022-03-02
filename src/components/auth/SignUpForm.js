@@ -5,39 +5,33 @@ import {
   Card,
   CardActions,
   CardContent,
-  TextField,
+  Divider,
+  TextField
 } from "@mui/material";
 import React, { useState } from "react";
+import GoogleLogin from "react-google-login";
 import { useForm } from "react-hook-form";
 import { useHistory } from "react-router-dom";
-import * as yup from "yup";
-import {
-  registerWithEmailAndPassword,
-  loginWithEmailAndPassword,
-} from "../../api/functions";
+import { useAuth } from "../../hooks/useAuth";
+import useSnackbars from "../../hooks/useSnackbars";
+import signUpFormSchema from "../../schemas/signUpFormSchema";
 
-//TODO: validate and update error message in direct live
+//TODO: validate and update fields error messages in direct live
 //TODO: check if possible to validate form when browser autofill fields
-const schema = yup
-  .object({
-    email: yup
-      .string()
-      .email("Must be a valid email")
-      .max(255)
-      .required("Email is required"),
-    password: yup.string().min(6).max(255).required("Password is required"),
-    passwordConfirmation: yup
-      .string()
-      .min(6)
-      .max(255)
-      .oneOf([yup.ref("password"), null], "Password must match")
-      .required("Password confirmation is required"),
-  })
-  .required();
+//TODO: update fields errors message style
+//TODO: on google signin, ask to choose an account and don't directly connect to the last used (remove token?)
+//TODO: apply previous changes also to SignInForm
 
 const SignUpForm = () => {
+  let auth = useAuth();
+
+  const { addAlert } = useSnackbars();
+
+  // Form fields
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // eslint-disable-next-line no-unused-vars
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -49,42 +43,75 @@ const SignUpForm = () => {
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(signUpFormSchema),
   });
 
-  const onSubmit = async (data) => {
+  const onSubmit = (data) => {
     setIsSigningUp(true);
 
-    const res1 = await registerWithEmailAndPassword({
-      email,
-      password,
-    });
-    const res2 = await loginWithEmailAndPassword({ email, password });
+    auth
+      .signUpWithEmailAndPassword(name, email, password, () => {
+        setIsSigningUp(false);
 
-    setIsSigningUp(false);
+        addAlert({
+          message: "Welcome", // TODO: use custom message if new user
+          severity: "success",
+        });
+      })
+      .catch((err) => {
+        setIsSigningUp(false);
 
-    welcomeAndRedirectUser(res2);
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
+      });
   };
 
-  const welcomeAndRedirectUser = (res) => {
-    //TODO: replace alert with snackbar
-    if (res.error) {
-      alert(res?.message);
-    } else {
-      if (res.is_new_user) {
-        alert("Welcome newbie!");
-      } else if (!res.isNewUser) {
-        alert("Welcome back!");
-      }
+  const onGetOauthGoogleTokenSuccess = async (response) => {
+    setIsSigningUp(true);
 
-      history.push("/dashboard");
-    }
+    auth
+      .signInWithGoogle(response.accessToken, () => {
+        setIsSigningUp(false);
+
+        addAlert({
+          message: "Welcome", // TODO: use custom message if new user
+          severity: "success",
+        });
+      })
+      .catch((err) => {
+        setIsSigningUp(false);
+
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
+      });
+  };
+
+  const onGetOauthGoogleTokenFail = async (error) => {
+    addAlert({
+      message: error,
+      severity: "error",
+    });
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card>
         <CardContent>
+          <TextField
+            fullWidth
+            placeholder="Name"
+            {...register("name")}
+            required
+            onChange={(event) => {
+              setName(event.target.value);
+            }}
+          />
+          <p>{errors.name?.message}</p>
+
           <TextField
             fullWidth
             placeholder="Email"
@@ -106,6 +133,7 @@ const SignUpForm = () => {
               setPassword(event.target.value);
             }}
           />
+          {/* //TODO: style error messages */}
           <p>{errors.password?.message}</p>
 
           <TextField
@@ -119,28 +147,42 @@ const SignUpForm = () => {
             }}
           />
           <p>{errors.passwordConfirmation?.message}</p>
-        </CardContent>
-        <CardActions>
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            loading={isSigningUp}
-            sx={{
-              m: 1,
-            }}
-          >
-            Sign up
-          </LoadingButton>
 
-          <Button
-            sx={{
-              m: 1,
-            }}
-            href="/signin"
+          <CardActions>
+            <LoadingButton
+              type="submit"
+              variant="contained"
+              loading={isSigningUp}
+              sx={{
+                m: 1,
+              }}
+            >
+              Sign up
+            </LoadingButton>
+
+            <Button
+              sx={{
+                m: 1,
+              }}
+              href="/signin"
+            >
+              I already have an account
+            </Button>
+          </CardActions>
+
+          <Divider>or</Divider>
+
+          <CardActions
+            sx={{ display: "flex", justifyContent: "center", mt: 2 }}
           >
-            I already have an account
-          </Button>
-        </CardActions>
+            <GoogleLogin
+              clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+              buttonText="Sign up with Google"
+              onSuccess={onGetOauthGoogleTokenSuccess}
+              onFailure={onGetOauthGoogleTokenFail}
+            />
+          </CardActions>
+        </CardContent>
       </Card>
     </form>
   );

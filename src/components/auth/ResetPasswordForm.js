@@ -3,19 +3,15 @@ import { LoadingButton } from "@mui/lab";
 import { Card, CardActions, CardContent, TextField } from "@mui/material";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import * as yup from "yup";
-
-const schema = yup
-  .object({
-    email: yup
-      .string()
-      .email("Must be a valid email")
-      .max(255)
-      .required("Email is required"),
-  })
-  .required();
+import { useAuth } from "../../hooks/useAuth";
+import useSnackbars from "../../hooks/useSnackbars";
+import resetPasswordFormSchema from "../../schemas/resetPasswordFormSchema";
 
 const ResetPasswordForm = () => {
+  let auth = useAuth();
+
+  const { addAlert } = useSnackbars();
+
   const [email, setEmail] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
@@ -25,19 +21,30 @@ const ResetPasswordForm = () => {
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(resetPasswordFormSchema),
   });
 
   //TODO: use snackbar
   const onSubmit = async (data) => {
     setIsLoading(true);
 
-    //TODO
-    //await resetPassword(email);
+    auth
+      .resetPassword(email, () => {
+        setIsLoading(false);
 
-    setIsLoading(false);
+        addAlert({
+          message: "If email is valid, a reset password email has been sent",
+          severity: "success",
+        });
+      })
+      .catch((err) => {
+        setIsLoading(false);
 
-    alert("Password reset link sent!");
+        addAlert({
+          message: err.message,
+          severity: "error",
+        });
+      });
   };
 
   return (

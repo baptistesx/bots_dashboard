@@ -1,14 +1,15 @@
-import { default as React } from "react";
+import React from "react";
 import { Redirect, Route } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 // AdminRoutes can only be accessed by admin members
-const AdminRoute = ({ component: Component, ...rest }) => {
-  const isAdmin= JSON.parse(localStorage.getItem("user"))?.is_admin;
+const AdminRoute = (props) => {
+  let auth = useAuth();
 
-  return !isAdmin ? (
+  return !auth.user.isAdmin ? (
     <Redirect to="/not-found" />
   ) : (
-    <Route {...rest} render={(props) => <Component {...rest} {...props} />} />
+    <Route {...props} />
   );
 };
 

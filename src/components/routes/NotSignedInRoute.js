@@ -1,19 +1,12 @@
 import React from "react";
 import { Redirect, Route } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 // NotSignedInRoutes cannot be accessed when signed in
-function NotSignedInRoute({ component: Component, ...rest }) {
-  const user = JSON.parse(localStorage.getItem("user"));
+function NotSignedInRoute(props) {
+  let auth = useAuth();
 
-  return user ? (
-    rest.path === "/" ? (
-      <Redirect to="/dashboard" />
-    ) : (
-      <Redirect to="/not-found" />
-    )
-  ) : (
-    <Route {...rest} render={(props) => <Component {...rest} {...props} />} />
-  );
+  return auth.user ? <Redirect to="/dashboard" /> : <Route {...props} />;
 }
 
 export default NotSignedInRoute;

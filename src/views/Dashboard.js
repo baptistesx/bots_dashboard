@@ -1,37 +1,49 @@
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { Button, Typography } from "@mui/material";
-import CircularProgress from "@mui/material/CircularProgress";
+import { Box, Button, Typography } from "@mui/material";
 import React from "react";
+import { useHistory } from "react-router-dom";
 import GlobalLayout from "../components/layout/GlobalLayout";
+import { useAuth } from "../hooks/useAuth";
 
 function Dashboard() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const { user } = useAuth();
+
+  const history = useHistory();
+
+  const handleNavigate = (path) => {
+    history.push(path);
+  };
 
   return (
     <GlobalLayout>
-      <Typography variant="h1">Home</Typography>
-      {user ? (
-        user?.is_premium ? (
-          <Button href="/workaway-bot" variant="contained" sx={{ m: 1 }}>
-            Workaway messaging
-            <ArrowForwardIcon />
-          </Button>
-        ) : (
-          <Button href="/get-licence" variant="contained" sx={{ m: 1 }}>
-            Get Premium Account to access bots !
-            <ArrowForwardIcon />
-          </Button>
-        )
+      <Typography variant="h1">Dashboard</Typography>
+
+      {user.isPremium ? (
+        <Button
+          onClick={() => handleNavigate("/workaway-bot")}
+          variant="contained"
+          sx={{ m: 1 }}
+        >
+          Workaway messaging
+          <ArrowForwardIcon />
+        </Button>
       ) : (
-        <CircularProgress />
+        <Button
+          onClick={() => handleNavigate("/get-licence")}
+          variant="contained"
+          sx={{ m: 1 }}
+        >
+          Get Premium Account to access bots !
+          <ArrowForwardIcon />
+        </Button>
       )}
 
-      {!user?.is_email_verified ? (
+      {!user.isEmailVerified ? (
         <Typography>
           Remember to check the confirmation email we sent you.
         </Typography>
       ) : (
-        ""
+        <Box />
       )}
     </GlobalLayout>
   );
